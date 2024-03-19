@@ -30,8 +30,9 @@ const ContactManager = () => {
         console.log('inside handleSubmit---', contactDetails);
         if (validateExistingContact(contactDetails)) {
             if (contactDetails.id) {
-                setIsContactModal(false);
                 setIsLoading(true);
+                setIsContactModal(false);
+                
                 
                 // handleUpdateContact(contactDetails)
                 //     .then(response => {
@@ -52,20 +53,11 @@ const ContactManager = () => {
                 //     })
 
             } else {
+                setIsLoading(false);
                 setIsContactModal(false);
                 contactDetails.id = contactList.length + 1;
-                setIsLoading(true);
-                // handleAddContact(contactDetails)
-                //     .then(response => {
-                //         if (response.status == 201) {
-                //             setContactList([...contactList, response.data]);
-                //         }
-                //         setIsLoading(false);
-                //     })
-                //     .catch(error => {
-                //         alert(error.message);
-                //         setIsLoading(false);
-                //     })
+                
+                console.log('inside ContactManager ELSE---',contactDetails);
             }
         }
     }

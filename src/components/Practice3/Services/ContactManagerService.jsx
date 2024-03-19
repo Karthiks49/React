@@ -1,4 +1,4 @@
-import { useMutation } from "react-query";
+import { useMutation, useQuery } from "react-query";
 import axios from "axios";
 
 const client = axios.create({
@@ -9,31 +9,16 @@ const client = axios.create({
     }
 })
 
-const handleAddContact = (contactDetails) => {
 
-    //mutation.mutate(contactDetails);
-    return client.post('/users', contactDetails)
-    .then(response => {
-        return response;
-    })
-    .catch(error => {
-        console.error("Error updating contact:", error);
-        throw error;
-    });
-    // console.log('mutation--', mutation)
-    // mutation.then(response => {
-    //         return response;
-    //     })
-    //     .catch(error => {
-    //         console.error("Error adding contact:", error);
-    //         throw error;
-    //     });
-    //     // console.log('mutation----',mutation);
 
-    // return mutation;
-}
 
-const handleUpdateContact = (contactDetails) => {
+export const handleAddContact= (contactDetails) => {
+    addMutation.mutate(contactDetails);
+    console.log('inside add contact mutation--',mutation);
+} 
+
+
+export const handleUpdateContact = (contactDetails) => {
     return client.put('/users/' + contactDetails.id, contactDetails)
         .then(response => {
             return response;
@@ -44,7 +29,7 @@ const handleUpdateContact = (contactDetails) => {
         });
 }
 
-const handleDeleteContact = (id) => {
+export const handleDeleteContact = (id) => {
     return client.delete('/users/' + id)
         .then(response => {
             return response;
@@ -56,4 +41,4 @@ const handleDeleteContact = (id) => {
 }
 
 
-export  { handleAddContact, handleUpdateContact, handleDeleteContact};
+// export { handleAddContact, handleUpdateContact, handleDeleteContact };
