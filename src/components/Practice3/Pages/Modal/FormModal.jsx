@@ -1,8 +1,47 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import AppButton from "../../Components/AppButton";
+import { Link, useNavigate } from "react-router-dom";
+import { useMutation, useQuery } from "react-query";
+import axios from "axios";
 
-const FormModal = ({onSubmit, modalVisible, contactDetails, isView}) => {
-    const initialFormData = contactDetails?.id ? contactDetails : {
+const client = axios.create({
+    baseURL: "https://65fd7a619fc4425c65320b76.mockapi.io/api",
+    headers: {
+        "Content-Type": "application/json",
+        timeout: 2000
+    }
+})
+
+
+const FormModal = ({ isView, isDelete, isNewContact, id }) => {
+    const [contactDetails, setContactDetails] = useState({});
+    const navigate = useNavigate();
+    const addData = useMutation((newData) => {
+        console.log('inside add contact mutate---', newData)
+        client.post('/contacts', newData)
+            .then(response => {
+                navigate('/contact-manager');
+                return response;
+            })
+    });
+
+    const updateData = useMutation((newData) => {
+        client.put('/contacts/' + newData.id, newData)
+            .then(response => {
+                navigate('/contact-manager');
+                return response
+            })
+    });
+
+    const deleteData = useMutation((id) => {
+        client.delete('/contacts/' + id)
+            .then(response => {
+                navigate('/contact-manager');
+                return response
+            })
+    });
+
+    const initialFormData = !isNewContact ? contactDetails : {
         id: 0,
         name: '',
         email: '',
@@ -13,6 +52,22 @@ const FormModal = ({onSubmit, modalVisible, contactDetails, isView}) => {
     const [isNameError, setIsNameError] = useState(false);
     const [isEmailError, setIsEmailError] = useState(false);
     const [isMobileNumberError, setIsMobileNumberError] = useState(false);
+
+    const handleDelete = () => {
+        deleteData.mutate(contactDetails.id);
+    }
+
+    const handleSubmit = (event) => {
+        event.preventDefault();
+        console.log('inside FormModal----handleSubmit---', formData);
+        if (isNewContact) {
+            console.log('inside ADD contact handleSubmit----', formData)
+            addData.mutate(formData);
+        } else {
+            console.log('inside handle FormMODAL ELSEEEEE', formData)
+            updateData.mutate(formData);
+        }
+    };
 
     const handleChange = (event) => {
         const { name, value } = event.target;
@@ -28,10 +83,35 @@ const FormModal = ({onSubmit, modalVisible, contactDetails, isView}) => {
         }
     }
 
-    const handleSubmit = (event) => {
-        event.preventDefault();
-        onSubmit(formData);
+    useEffect(() => {
+        if(!isNewContact) {
+            setFormData(initialFormData);
+        }
+    },[initialFormData])
+
+    const { data, isLoading, error } = useQuery('contact', async () => {
+        if (id) {
+            try {
+                console.log('inside contactModal id--', id);
+                const response = await client.get(`/contacts/${id}`);
+                return response.data;
+            } catch (error) {
+                console.log('Error in fetching contact: ', error);
+            }
+        }
+    });
+
+    useEffect(() => {
+        if (data) {
+            console.log('inside contactMODAL useEFFECT<><><><><', data)
+            setContactDetails(data);
+        }
+    }, [data])
+
+    if (isLoading) {
+        return <h2>Loading ...</h2>
     }
+
 
     return (
         <form className="add-contact-form" onSubmit={handleSubmit}>
@@ -72,10 +152,26 @@ const FormModal = ({onSubmit, modalVisible, contactDetails, isView}) => {
             </div>}
             <div className="flex-dir-row">
                 {isView ?
-                    <div className="form-view-btn"><AppButton className='form-btn' handleClick={modalVisible} description='OK' /></div> :
+                    (isDelete ?
+                        <>
+                            <Link onClick={handleDelete}>
+                                <div className="form-view-btn"><AppButton className='form-btn' description='Yes' /></div>
+                            </Link>
+                            <Link to={'/contact-manager'}>
+                                <div className="form-view-btn"><AppButton className='form-btn' btnType='button' description='No' /></div>
+                            </Link>
+                        </> :
+
+                        <Link to={'/contact-manager'} onClick={isDelete && handleDelete}>
+                            <div className="form-view-btn"><AppButton className='form-btn' description='OK' /></div>
+                        </Link>) :
                     <>
-                        <AppButton className={(isNameError || isEmailError || isMobileNumberError) ? 'form-btn-disabled' : 'form-btn'} btnType='submit' description='Submit' />
-                        <AppButton className='form-btn' btnType='button' handleClick={modalVisible} description='Close' />
+                        <Link to={'/contact-manager'} onClick={handleSubmit}>
+                            <AppButton className={(isNameError || isEmailError || isMobileNumberError) ? 'form-btn-disabled' : 'form-btn'} btnType='submit' description='Submit' />
+                        </Link>
+                        <Link to={'/contact-manager'}>
+                            <AppButton className='form-btn' btnType='button' description='Close' />
+                        </Link>
                     </>
                 }
             </div>

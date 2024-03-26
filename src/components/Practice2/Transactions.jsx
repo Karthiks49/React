@@ -44,7 +44,7 @@ const Transactions = () => {
 
     return (
         <div className="transaction-body">
-            <div>
+            <div className="transaction-input-container">
                 <h1>Balance: {balance}</h1>
                 <InputAmount input={input} onChange={handleInputChange} />
                 <ButtonComponent credit={handleCredit} debit={handleDebit} />

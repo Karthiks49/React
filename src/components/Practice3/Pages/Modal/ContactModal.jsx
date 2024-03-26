@@ -1,53 +1,38 @@
-import { useState } from "react";
-import AppButton from "../../Components/AppButton";
 import axios from "axios";
-import { useMutation } from "react-query";
-import { handleAddContact } from "../../Services/ContactManagerService";
+import { useMutation, useQuery } from "react-query";
 import FormModal from "./FormModal";
+import { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
+import Header from "../../Layouts/Header/Header";
 
 const client = axios.create({
-    baseURL: "https://reqres.in/api",
+    baseURL: "https://65fd7a619fc4425c65320b76.mockapi.io/api",
     headers: {
         "Content-Type": "application/json",
         timeout: 2000
     }
 })
 
-const ContactModal = ({ onSubmit, modalVisible, contactDetails, isView }) => {
 
-    const mutation = useMutation((contact) => {
-        return client.post('/users', contact)
-            .then(response => response.data)
-            .catch(error => {
-                console.log('Error in adding contact:', error);
-                throw error;
-            });
-    });
+const ContactModal = () => {
+    const { state } = useLocation();
+    var isView = state?.isView;
+    var id = state?.id;
+    var isDelete = state?.isDelete;
+    var isNewContact = state?.isNewContact;
 
-    const handleSubmit = (formData) => {
-        mutation.mutate(formData);
-    };
-    if(mutation.data) {
-        
-        mutation.data.id = 0;
-        console.log('mutation inside IFFFFf---DATA---', mutation.data);
-        onSubmit(mutation.data);
-    }
-    console.log('inside add contact mutation--', mutation);
-    console.log('isLoading---', mutation.isLoading);
-    console.log('isError--', mutation.isError);
-    console.log('error--', mutation.error);
+
 
 
     return (
         <>
-            <div className="blur-background"></div>
+            <Header />
             <div className={isView ? 'popup-content view-popup-content' : 'popup-content'}>
                 {isView ?
-                    <span className="modal-heading">Contact Details</span> :
-                    <span className="modal-heading">{contactDetails.id ? 'Update contact' : 'Add new contact'}</span>
+                    <span className="modal-heading">{isDelete ? 'Confirm to delete the contact' : 'Contact Details'}</span> :
+                    <span className="modal-heading">{!isNewContact ? 'Update contact' : 'Add new contact'}</span>
                 }
-                <FormModal onSubmit={handleSubmit} modalVisible={modalVisible} contactDetails={contactDetails} isView={isView}/>
+                <FormModal isView={isView} id={id} isDelete={isDelete} isNewContact={isNewContact} />
             </div>
         </>
 

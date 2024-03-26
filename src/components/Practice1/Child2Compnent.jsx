@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import ButtonComponent from "../Practice2/ButtonComponent";
+import AppButton from "./AppButton";
 
 const Child2Component = ({count}) => {
     const [childCount, setchildCount] = useState(0);
@@ -15,7 +16,7 @@ const Child2Component = ({count}) => {
     return(
         <>
             <h2>Child2 Count: {childCount}</h2>
-            <ButtonComponent increment={handleIncrement} decrement={handleDecrement}/>
+            <AppButton increment={handleIncrement} decrement={handleDecrement}/>
         </>
     )
 }

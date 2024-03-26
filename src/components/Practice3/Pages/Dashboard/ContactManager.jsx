@@ -1,148 +1,69 @@
 import { useEffect, useState } from "react";
 import AppButton from "../../Components/AppButton";
-import ContactModal from "../Modal/ContactModal";
 import ContactList from "./ContactList";
-import AppSearch from "../../Components/AppSearch";
-import Loader from "../../Components/Loader";
-import {handleAddContact, handleUpdateContact, handleDeleteContact} from "../../Services/ContactManagerService"
+import { Link } from "react-router-dom";
+import axios from "axios";
+import { useQuery } from "react-query";
+
+
+const client = axios.create({
+    baseURL: "https://65fd7a619fc4425c65320b76.mockapi.io/api",
+    headers: {
+        "Content-Type": "application/json",
+        timeout: 2000
+    }
+})
+
+const fetchData = () => {
+    return client.get('/contacts')
+        .then(response => {
+            return response.data
+        })
+        .catch(error => {
+            console.log('Error in getting contacts', error);
+        })
+};
 
 const ContactManager = () => {
-    const [isContactModal, setIsContactModal] = useState(false);
-    const [contactList, setContactList] = useState([]);
-    const [searchContactList, setSearchContactList] = useState([]);
-    const [isSearch, setIsSearch] = useState(false);
-    const [contact, setContact] = useState({});
-    const [isView, setIsView] = useState(false);
     const [apiContactList, setApiContactList] = useState([]);
-    const [isLoading, setIsLoading] = useState(false);
-    var contactArray = [];
+    const { data, isLoading, error } = useQuery('contacts', fetchData);
+
+    console.log('fakeAPI----data', data)
+    console.log('data.json   apiCotactList---', apiContactList)
 
     useEffect(() => {
-        setApiContactList(contactList);
-    }, [contactList])
-
-    const handleContactModal = () => {
-        setContact({});
-        setIsContactModal(true);
-    }
-
-    const handleSubmit = (contactDetails) => {
-        console.log('inside handleSubmit---', contactDetails);
-        if (validateExistingContact(contactDetails)) {
-            if (contactDetails.id) {
-                setIsLoading(true);
-                setIsContactModal(false);
-                
-                
-                // handleUpdateContact(contactDetails)
-                //     .then(response => {
-                //         if (response.status == 200) {
-                //             setContactList(contactList.map((contact, index) => {
-                //                 if (contact.id == response.data.id) {
-                //                     return response.data;
-                //                 } else {
-                //                     return contact;
-                //                 }
-                //             }));
-                //         }
-                //         setIsLoading(false);
-                //     })
-                //     .catch(error => {
-                //         alert(error.message);
-                //         setIsLoading(false);
-                //     })
-
-            } else {
-                setIsLoading(false);
-                setIsContactModal(false);
-                contactDetails.id = contactList.length + 1;
-                
-                console.log('inside ContactManager ELSE---',contactDetails);
-            }
+        console.log('inside useEffect of apiContactList----', isLoading);
+        if (data) {
+            setApiContactList(data);
         }
-    }
+    }, [data])
 
-    const validateExistingContact = (contactDetails) => {
-        for (let contact of contactList) {
-            if ((contact.id != contactDetails.id) && (contactDetails.mobileNumber == contact.mobileNumber)) {
-                alert('Mobile number already exist !!!');
-                return false;
-            } else if ((contact.id != contactDetails.id) && (contactDetails.email == contact.email)) {
-                alert('Email already exist !!!');
-                return false;
-            }
-        }
-        return true;
-    }
-
-    const handleSearch = (search) => {
-        if (search && contactList.length > 0) {
-            setIsSearch(true);
-            contactArray = contactList.filter((contact) => contact.name.toLowerCase().startsWith(search.toLowerCase()));
-            if (!contactArray.length) {
-                contactArray = contactList.filter((contact) => contact.email.startsWith(search));
-            }
-            setSearchContactList(contactArray);
-        } else {
-            setIsSearch(false);
-            setSearchContactList([]);
-        }
-    }
-
-    const handleDelete = (id) => {
-        setIsLoading(true);
-        handleDeleteContact(id)
-            .then(response => {
-                if (response.status == 204) {
-                    setContactList(contactList.filter((person) => person.id !== id));
-                }
-                setIsLoading(false);
-                mutaiosn
-            })
-            .catch(error => {
-                alert(error.message);
-                setIsLoading(false);
-            })
-    }
-
-    const handleUpdate = (id) => {
-        setContact(contactList.find(item => item.id == id));
-        setIsContactModal(true);
-    }
-
-    const handleView = (id) => {
-        setIsContactModal(true);
-        setIsView(true);
-        setContact(contactList.find(item => item.id == id));
-    }
-
-    const handleCloseModal = () => {
-        setIsContactModal(false);
-        setIsView(false);
-        setIsSearch(false);
+    if (isLoading) {
+        return <h2>Loading ...</h2>
     }
 
     return (
         <>
-            { isLoading ? <div className="loading-effect"><Loader classList='spinner' /></div> : '' }
             <div className="bg-clr-1">
                 <div className="ds-flex">
                     <div className="contact-title">Contacts</div>
                     <div className="add-contacts-container">
                         <div className="add-contact-button">
-                            <AppButton className="add-contact-btn" icon={<span className="material-symbols-outlined">add_circle</span>} description={<span style={{ padding: '0 4px' }} >New</span>} handleClick={handleContactModal} />
-                            {isContactModal && <ContactModal onSubmit={handleSubmit} modalVisible={handleCloseModal} contactDetails={contact} isView={isView} />}
+                            <Link to={'/contact-manager/form'} state={{ "isNewContact": true }}>
+                                <AppButton className="add-contact-btn" icon={<span className="material-symbols-outlined">add_circle</span>} description={<span style={{ padding: '0 4px' }} >New</span>} />
+                            </Link>
                         </div>
                     </div>
                 </div>
-                <div className="search-container">
+                {/* <div className="search-container">
                     <AppSearch onSearch={handleSearch} />
-                </div>
+                </div> */}
                 <div className="contacts-manager-body">
                     {(apiContactList.length == 0) ? <div className="body-status"><span>Add new contact</span></div> : ''}
-                    {(isSearch && searchContactList.length == 0) ? <div className="body-status"><span>No records found </span></div> : ''}
+                    {/* {(isSearch && searchContactList.length == 0) ? <div className="body-status"><span>No records found </span></div> : ''} */}
                     <div className="contact-details-body">
-                        <ContactList contactList={isSearch ? searchContactList : apiContactList} handleProfileDelete={handleDelete} handleEdit={handleUpdate} handleView={handleView} />
+                        {/* <ContactList contactList={isSearch ? searchContactList : apiContactList} handleEdit={handleUpdate} /> */}
+                        <ContactList contactList={apiContactList} />
                     </div>
                 </div>
             </div>

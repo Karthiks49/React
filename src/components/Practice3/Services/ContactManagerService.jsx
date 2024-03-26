@@ -2,20 +2,12 @@ import { useMutation, useQuery } from "react-query";
 import axios from "axios";
 
 const client = axios.create({
-    baseURL: "https://reqres.in/api",
+    baseURL: "https://65fd7a619fc4425c65320b76.mockapi.io/api",
     headers: {
         "Content-Type": "application/json",
         timeout: 2000
     }
 })
-
-
-
-
-export const handleAddContact= (contactDetails) => {
-    addMutation.mutate(contactDetails);
-    console.log('inside add contact mutation--',mutation);
-} 
 
 
 export const handleUpdateContact = (contactDetails) => {
@@ -30,7 +22,8 @@ export const handleUpdateContact = (contactDetails) => {
 }
 
 export const handleDeleteContact = (id) => {
-    return client.delete('/users/' + id)
+    console.log('inside handleDelete----', id)
+    return client.delete('/contacts/' + id)
         .then(response => {
             return response;
         })
@@ -39,6 +32,3 @@ export const handleDeleteContact = (id) => {
             throw error;
         });
 }
-
-
-// export { handleAddContact, handleUpdateContact, handleDeleteContact };

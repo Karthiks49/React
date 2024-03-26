@@ -3,13 +3,15 @@ import Contact from "./Contact";
 const ContactList = ({ contactList, handleProfileDelete, handleEdit, handleView }) => {
     return (
         <div className="grid-container">
-            {contactList.map((person, index) => {
-                return (
-                <div key={index} className="grid-item">
-                    <Contact item={person} handleDelete={handleProfileDelete} handleUpdate={handleEdit} handleViewContact={handleView} />
-                </div>
-                )
-            })}
+            {contactList &&
+                contactList.map((person, index) => {
+                    return (
+                        <div key={index} className="grid-item">
+                            <Contact item={person} handleDelete={handleProfileDelete} handleUpdate={handleEdit} handleViewContact={handleView} />
+                        </div>
+                    )
+                })
+            }
         </div>
     );
 }

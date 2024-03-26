@@ -1,0 +1,16 @@
+[
+    {
+        "id": 1,
+        "name": "Karthik",
+        "email": "karthik@gmail.com",
+        "mobileNumber": "1111111111",
+        "profilePic": ""
+    },
+    {
+        "id": 2,
+        "name": "Kavin",
+        "email": "kavin@gmail.com",
+        "mobileNumber": "2222222222",
+        "profilePic": ""
+    }
+]

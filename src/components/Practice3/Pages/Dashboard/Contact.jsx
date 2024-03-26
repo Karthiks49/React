@@ -1,17 +1,6 @@
+import { Link } from "react-router-dom";
 
-const Contact = ({ item, handleDelete, handleUpdate, handleViewContact }) => {
-    const handleDeleteClick = (event) => {
-        event.preventDefault();
-        handleDelete(item.id);
-    }
-    const handleEdit = (event) => {
-        event.preventDefault();
-        handleUpdate(item.id);
-    }
-    const handleView = (event) => {
-        event.preventDefault();
-        handleViewContact(item.id);
-    }
+const Contact = ({ item }) => {
     return (
         <>
             <div className="grid-item-profile">
@@ -23,15 +12,21 @@ const Contact = ({ item, handleDelete, handleUpdate, handleViewContact }) => {
                 <div className="item-detail">Mobile:  {item.mobileNumber}</div>
             </div>
             <div className="grid-item-options">
-                <button className="action-icon" onClick={handleView} style={{ backgroundColor: '#F8BF09' }}>
-                    <span className="material-symbols-outlined">visibility</span>
-                </button>
-                <button className="action-icon" onClick={handleEdit} style={{ backgroundColor: '#0B6BF1' }}>
-                    <span className="material-symbols-outlined">edit</span>
-                </button>
-                <button className="action-icon" onClick={handleDeleteClick} style={{ backgroundColor: '#D75564' }}>
-                    <span className="material-symbols-outlined">delete</span>
-                </button>
+                <Link to={'/contact-manager/form'} state={{ "id": item.id, "isView": true }}>
+                    <button className="action-icon" style={{ backgroundColor: '#F8BF09' }}>
+                        <span className="material-symbols-outlined">visibility</span>
+                    </button>
+                </Link>
+                <Link to={'/contact-manager/form'} state={{"id": item.id, "isEdit": true}}>
+                    <button className="action-icon" style={{ backgroundColor: '#0B6BF1' }}>
+                        <span className="material-symbols-outlined">edit</span>
+                    </button>
+                </Link>
+                <Link to={'/contact-manager/form'} state={{"id": item.id, "isView": true, "isDelete":true}}>
+                    <button className="action-icon" style={{ backgroundColor: '#D75564' }}>
+                        <span className="material-symbols-outlined">delete</span>
+                    </button>
+                </Link>
             </div>
         </>
     );
