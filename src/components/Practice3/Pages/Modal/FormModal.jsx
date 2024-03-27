@@ -12,16 +12,59 @@ const client = axios.create({
     }
 })
 
+const fetchData = () => {
+    return client.get('/contacts')
+        .then(response => {
+            return response.data
+        })
+        .catch(error => {
+            console.log('Error in getting contacts', error);
+        })
+};
 
 const FormModal = ({ isView, isDelete, isNewContact, id }) => {
-    const [contactDetails, setContactDetails] = useState({});
+    const [allContacts, setAllContacts] = useState([]);
+    const contacts = useQuery('contacts', fetchData);
+    const [formData, setFormData] = useState({
+        id: 0,
+        name: '',
+        email: '',
+        mobileNumber: '',
+        profilePic: ''
+    });
+    const [isNameError, setIsNameError] = useState(false);
+    const [isEmailError, setIsEmailError] = useState(false);
+    const [isMobileNumberError, setIsMobileNumberError] = useState(false);
     const navigate = useNavigate();
+
+    const { data } = useQuery('contact', async () => {
+        if (id) {
+            return await client.get(`/contacts/${id}`)
+                .then(response => {
+                    return response.data;
+                })
+                .catch(error => {
+                    console.log('Error in fetching data', error);
+                    throw error;
+                })
+        }
+    });
+
+    useEffect(() => {
+        if (contacts.data) {
+            setAllContacts(contacts.data);
+        }
+    }, [contacts])
+
     const addData = useMutation((newData) => {
-        console.log('inside add contact mutate---', newData)
         client.post('/contacts', newData)
             .then(response => {
                 navigate('/contact-manager');
                 return response;
+            })
+            .catch(error => {
+                console.log('Error in adding contact', error);
+                throw error;
             })
     });
 
@@ -31,6 +74,10 @@ const FormModal = ({ isView, isDelete, isNewContact, id }) => {
                 navigate('/contact-manager');
                 return response
             })
+            .catch(error => {
+                console.log('Error in adding contact', error);
+                throw error;
+            })
     });
 
     const deleteData = useMutation((id) => {
@@ -39,33 +86,24 @@ const FormModal = ({ isView, isDelete, isNewContact, id }) => {
                 navigate('/contact-manager');
                 return response
             })
-    });
-
-    const initialFormData = !isNewContact ? contactDetails : {
-        id: 0,
-        name: '',
-        email: '',
-        mobileNumber: '',
-        profilePic: ''
-    }
-    const [formData, setFormData] = useState(initialFormData);
-    const [isNameError, setIsNameError] = useState(false);
-    const [isEmailError, setIsEmailError] = useState(false);
-    const [isMobileNumberError, setIsMobileNumberError] = useState(false);
+            .catch(error => {
+                console.log('Error in adding contact', error);
+                throw error;
+            })
+    }); 
 
     const handleDelete = () => {
-        deleteData.mutate(contactDetails.id);
+        deleteData.mutate(formData.id);
     }
 
     const handleSubmit = (event) => {
         event.preventDefault();
-        console.log('inside FormModal----handleSubmit---', formData);
-        if (isNewContact) {
-            console.log('inside ADD contact handleSubmit----', formData)
-            addData.mutate(formData);
-        } else {
-            console.log('inside handle FormMODAL ELSEEEEE', formData)
-            updateData.mutate(formData);
+        if (validateExistingContact(formData)) {
+            if (isNewContact) {
+                addData.mutate(formData);
+            } else {
+                updateData.mutate(formData);
+            }
         }
     };
 
@@ -84,43 +122,35 @@ const FormModal = ({ isView, isDelete, isNewContact, id }) => {
     }
 
     useEffect(() => {
-        if(!isNewContact) {
-            setFormData(initialFormData);
-        }
-    },[initialFormData])
-
-    const { data, isLoading, error } = useQuery('contact', async () => {
-        if (id) {
-            try {
-                console.log('inside contactModal id--', id);
-                const response = await client.get(`/contacts/${id}`);
-                return response.data;
-            } catch (error) {
-                console.log('Error in fetching contact: ', error);
-            }
-        }
-    });
-
-    useEffect(() => {
-        if (data) {
-            console.log('inside contactMODAL useEFFECT<><><><><', data)
-            setContactDetails(data);
+        if (!isNewContact && data) {
+            setFormData(data);
         }
     }, [data])
 
-    if (isLoading) {
-        return <h2>Loading ...</h2>
+    const validateExistingContact = (contactDetails) => {
+        let isValid = true;
+        for (let contact of allContacts) {
+            if ((contact.id != contactDetails.id) && (contactDetails.mobileNumber == contact.mobileNumber)) {
+                alert('Mobile number already exist !!!');
+                isValid = false;
+                break;
+            } else if ((contact.id != contactDetails.id) && (contactDetails.email == contact.email)) {
+                alert('Email already exist !!!');
+                isValid = false;
+                break;
+            }
+        }
+        return isValid;
     }
-
 
     return (
         <form className="add-contact-form" onSubmit={handleSubmit}>
             <div className="form-input">
                 <label>Name:</label>
                 {isView ?
-                    (<span className="view-text">{contactDetails.name}</span>) :
+                    (<div className="view-text"><span>{formData.name}</span></div>) :
                     (<div className="input-style">
-                        <input required type="text" autoComplete="off" value={formData.name} name="name" onChange={handleChange} className={isNameError ? 'input-error' : ''} />
+                        <input onKeyDown={e => { e.key == 'Enter' && handleSubmit(e) }} required type="text" autoComplete="off" value={formData.name} name="name" onChange={handleChange} className={isNameError ? 'input-error' : ''} />
                         {isNameError ? <span>Invalid name</span> : ''}
                     </div>)
                 }
@@ -128,9 +158,9 @@ const FormModal = ({ isView, isDelete, isNewContact, id }) => {
             <div className="form-input">
                 <label>Email:</label>
                 {isView ?
-                    (<span className="view-text">{contactDetails.email}</span>) :
+                    (<span className="view-text">{formData.email}</span>) :
                     (<div className="input-style">
-                        <input required type="email" autoComplete="off" value={formData.email} name="email" onChange={handleChange} className={isEmailError ? 'input-error' : ''} />
+                        <input onKeyDown={e => { e.key == 'Enter' && handleSubmit(e) }} required type="email" autoComplete="off" value={formData.email} name="email" onChange={handleChange} className={isEmailError ? 'input-error' : ''} />
                         {isEmailError ? <span>Invalid email</span> : ''}
                     </div>
                     )
@@ -138,16 +168,16 @@ const FormModal = ({ isView, isDelete, isNewContact, id }) => {
             </div>
             <div className="form-input">
                 <label>Mobile Number:</label>
-                {isView ? (<span className="view-text">{contactDetails.mobileNumber}</span>) :
+                {isView ? (<span className="view-text">{formData.mobileNumber}</span>) :
                     (<div className="input-style">
-                        <input required type="text" autoComplete="off" value={formData.mobileNumber} name="mobileNumber" onChange={handleChange} className={isMobileNumberError ? 'input-error' : ''} />
+                        <input onKeyDown={e => { e.key == 'Enter' && handleSubmit(e) }} required type="text" autoComplete="off" value={formData.mobileNumber} name="mobileNumber" onChange={handleChange} className={isMobileNumberError ? 'input-error' : ''} />
                         {isMobileNumberError ? <span>Invalid mobile number</span> : null}
                     </div>)}
             </div>
             {!isView && <div className="form-input">
                 <label>Profile link:</label>
                 <div className="input-style">
-                    <input type="text" autoComplete="off" placeholder="Optional" value={formData.profilePic} name="profilePic" onChange={handleChange} />
+                    <input onKeyDown={e => { e.key == 'Enter' && handleSubmit(e) }} type="text" autoComplete="off" placeholder="Optional" value={formData.profilePic} name="profilePic" onChange={handleChange} />
                 </div>
             </div>}
             <div className="flex-dir-row">
@@ -166,7 +196,7 @@ const FormModal = ({ isView, isDelete, isNewContact, id }) => {
                             <div className="form-view-btn"><AppButton className='form-btn' description='OK' /></div>
                         </Link>) :
                     <>
-                        <Link to={'/contact-manager'} onClick={handleSubmit}>
+                        <Link onClick={handleSubmit}>
                             <AppButton className={(isNameError || isEmailError || isMobileNumberError) ? 'form-btn-disabled' : 'form-btn'} btnType='submit' description='Submit' />
                         </Link>
                         <Link to={'/contact-manager'}>

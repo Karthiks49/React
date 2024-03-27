@@ -12,18 +12,18 @@ const Contact = ({ item }) => {
                 <div className="item-detail">Mobile:  {item.mobileNumber}</div>
             </div>
             <div className="grid-item-options">
-                <Link to={'/contact-manager/form'} state={{ "id": item.id, "isView": true }}>
-                    <button className="action-icon" style={{ backgroundColor: '#F8BF09' }}>
+                <Link to={`/contact-manager/contact/view/${item.id}`}>
+                    <button className="view-action-icon action-icon">
                         <span className="material-symbols-outlined">visibility</span>
                     </button>
                 </Link>
-                <Link to={'/contact-manager/form'} state={{"id": item.id, "isEdit": true}}>
-                    <button className="action-icon" style={{ backgroundColor: '#0B6BF1' }}>
+                <Link to={`/contact-manager/contact/edit/${item.id}`}>
+                    <button className="edit-action-icon action-icon">
                         <span className="material-symbols-outlined">edit</span>
                     </button>
                 </Link>
-                <Link to={'/contact-manager/form'} state={{"id": item.id, "isView": true, "isDelete":true}}>
-                    <button className="action-icon" style={{ backgroundColor: '#D75564' }}>
+                <Link to={`/contact-manager/contact/delete/${item.id}`}>
+                    <button className="delete-action-icon action-icon">
                         <span className="material-symbols-outlined">delete</span>
                     </button>
                 </Link>
