@@ -7,6 +7,7 @@ const AppSearch = ({onSearch}) => {
         event.preventDefault();
         onSearch(input);
     }
+    
     return(
         <div className="search-bar-container">
             <input onKeyDown={e => {e.key == 'Enter' && handleSearch(e)}} placeholder="Search User" type="text" className="search-input" onChange={(e) => e.target.value == '' ? onSearch('') : setInput(e.target.value)}/>

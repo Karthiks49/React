@@ -4,17 +4,18 @@ import FormModal from "./FormModal";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import Header from "../../Layouts/Header/Header";
+import { FormDataContext } from "../../assets/AppContext";
 
 const ContactModal = () => {
     const [isPageLoading, setIsPageLoading] = useState(false);
-    var {id} = useParams();
-    var {action} = useParams();
+    var { id } = useParams();
+    var { action } = useParams();
     var isView = false;
     var isDelete = false;
     var isNewContact = false;
 
-    switch(action) {
-        case ('view') :
+    switch (action) {
+        case ('view'):
             isView = true;
             break;
         case ('delete'):
@@ -22,11 +23,11 @@ const ContactModal = () => {
             isDelete = true;
             break;
         case ('create'):
-            isNewContact = true;    
+            isNewContact = true;
     }
 
     useEffect(() => {
-        if(!isNewContact) {
+        if (!isNewContact) {
             setIsPageLoading(true)
             const timer = setTimeout(() => {
                 setIsPageLoading(false);
@@ -34,6 +35,13 @@ const ContactModal = () => {
             return () => clearTimeout(timer);
         }
     }, []);
+
+    const formConfig = {
+        isView,
+        id,
+        isDelete,
+        isNewContact
+    }
 
     return (
         <>
@@ -50,10 +58,11 @@ const ContactModal = () => {
                     <span className="modal-heading">{isDelete ? 'Confirm to delete the contact' : 'Contact Details'}</span> :
                     <span className="modal-heading">{!isNewContact ? 'Update contact' : 'Add new contact'}</span>
                 }
-                <FormModal isView={isView} id={id} isDelete={isDelete} isNewContact={isNewContact} />
+                <FormDataContext.Provider value={formConfig}>
+                    <FormModal />
+                </FormDataContext.Provider>
             </div>
         </>
-
     );
 }
 

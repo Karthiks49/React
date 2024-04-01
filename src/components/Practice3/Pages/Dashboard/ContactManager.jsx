@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 import axios from "axios";
 import { useQuery } from "react-query";
 import AppSearch from "../../Components/AppSearch";
+import { ContactListContext } from "../../assets/AppContext";
 
 
 const client = axios.create({
@@ -93,7 +94,9 @@ const ContactManager = () => {
                     {(apiContactList.length == 0) ? <div className="body-status"><span>Add new contact</span></div> : ''}
                     {(isSearch && searchContactList.length == 0) ? <div className="body-status"><span>No records found </span></div> : ''}
                     <div className="contact-details-body">
-                        <ContactList contactList={isSearch ? searchContactList : apiContactList} />
+                        <ContactListContext.Provider value={isSearch ? searchContactList : apiContactList}>
+                            <ContactList />
+                        </ContactListContext.Provider>
                     </div>
                 </div>
             </div>

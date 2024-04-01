@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import AppButton from "../../Components/AppButton";
 import { Link, useNavigate } from "react-router-dom";
 import { useMutation, useQuery } from "react-query";
 import axios from "axios";
+import { FormDataContext } from "../../assets/AppContext";
 
 const client = axios.create({
     baseURL: "https://65fd7a619fc4425c65320b76.mockapi.io/api",
@@ -22,7 +23,10 @@ const fetchData = () => {
         })
 };
 
-const FormModal = ({ isView, isDelete, isNewContact, id }) => {
+const FormModal = () => {
+
+    const formConfig = useContext(FormDataContext);
+
     const [allContacts, setAllContacts] = useState([]);
     const contacts = useQuery('contacts', fetchData);
     const [formData, setFormData] = useState({
@@ -38,8 +42,8 @@ const FormModal = ({ isView, isDelete, isNewContact, id }) => {
     const navigate = useNavigate();
 
     const { data } = useQuery('contact', async () => {
-        if (id) {
-            return await client.get(`/contacts/${id}`)
+        if (formConfig.id) {
+            return await client.get(`/contacts/${formConfig.id}`)
                 .then(response => {
                     return response.data;
                 })
@@ -99,7 +103,7 @@ const FormModal = ({ isView, isDelete, isNewContact, id }) => {
     const handleSubmit = (event) => {
         event.preventDefault();
         if (validateExistingContact(formData)) {
-            if (isNewContact) {
+            if (formConfig.isNewContact) {
                 addData.mutate(formData);
             } else {
                 updateData.mutate(formData);
@@ -122,7 +126,7 @@ const FormModal = ({ isView, isDelete, isNewContact, id }) => {
     }
 
     useEffect(() => {
-        if (!isNewContact && data) {
+        if (!formConfig.isNewContact && data) {
             setFormData(data);
         }
     }, [data])
@@ -147,7 +151,7 @@ const FormModal = ({ isView, isDelete, isNewContact, id }) => {
         <form className="add-contact-form" onSubmit={handleSubmit}>
             <div className="form-input">
                 <label>Name:</label>
-                {isView ?
+                {formConfig.isView ?
                     (<div className="view-text"><span>{formData.name}</span></div>) :
                     (<div className="input-style">
                         <input onKeyDown={e => { e.key == 'Enter' && handleSubmit(e) }} required type="text" autoComplete="off" value={formData.name} name="name" onChange={handleChange} className={isNameError ? 'input-error' : ''} />
@@ -157,7 +161,7 @@ const FormModal = ({ isView, isDelete, isNewContact, id }) => {
             </div>
             <div className="form-input">
                 <label>Email:</label>
-                {isView ?
+                {formConfig.isView ?
                     (<span className="view-text">{formData.email}</span>) :
                     (<div className="input-style">
                         <input onKeyDown={e => { e.key == 'Enter' && handleSubmit(e) }} required type="email" autoComplete="off" value={formData.email} name="email" onChange={handleChange} className={isEmailError ? 'input-error' : ''} />
@@ -168,31 +172,31 @@ const FormModal = ({ isView, isDelete, isNewContact, id }) => {
             </div>
             <div className="form-input">
                 <label>Mobile Number:</label>
-                {isView ? (<span className="view-text">{formData.mobileNumber}</span>) :
+                {formConfig.isView ? (<span className="view-text">{formData.mobileNumber}</span>) :
                     (<div className="input-style">
                         <input onKeyDown={e => { e.key == 'Enter' && handleSubmit(e) }} required type="text" autoComplete="off" value={formData.mobileNumber} name="mobileNumber" onChange={handleChange} className={isMobileNumberError ? 'input-error' : ''} />
                         {isMobileNumberError ? <span>Invalid mobile number</span> : null}
                     </div>)}
             </div>
-            {!isView && <div className="form-input">
+            {!formConfig.isView && <div className="form-input">
                 <label>Profile link:</label>
                 <div className="input-style">
                     <input onKeyDown={e => { e.key == 'Enter' && handleSubmit(e) }} type="text" autoComplete="off" placeholder="Optional" value={formData.profilePic} name="profilePic" onChange={handleChange} />
                 </div>
             </div>}
             <div className="flex-dir-row">
-                {isView ?
-                    (isDelete ?
+                {formConfig.isView ?
+                    (formConfig.isDelete ?
                         <>
                             <Link onClick={handleDelete}>
                                 <div className="form-view-btn"><AppButton className='form-btn' description='Yes' /></div>
                             </Link>
                             <Link to={'/contact-manager'}>
-                                <div className="form-view-btn"><AppButton className='form-btn' btnType='button' description='No' /></div>
+                                <div className="form-view-btn"><AppButton className='form-btn' description='No' /></div>
                             </Link>
                         </> :
 
-                        <Link to={'/contact-manager'} onClick={isDelete && handleDelete}>
+                        <Link to={'/contact-manager'} onClick={formConfig.isDelete && handleDelete}>
                             <div className="form-view-btn"><AppButton className='form-btn' description='OK' /></div>
                         </Link>) :
                     <>

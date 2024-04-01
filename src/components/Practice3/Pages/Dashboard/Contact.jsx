@@ -1,6 +1,9 @@
+import { useContext } from "react";
 import { Link } from "react-router-dom";
+import { ContactItemContext } from "../../assets/AppContext";
 
-const Contact = ({ item }) => {
+const Contact = () => {
+    const item = useContext(ContactItemContext);
     return (
         <>
             <div className="grid-item-profile">
