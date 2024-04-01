@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useReducer } from "react";
 import AppButton from "../../Components/AppButton";
 import ContactList from "./ContactList";
 import { Link } from "react-router-dom";
@@ -26,47 +26,67 @@ const fetchData = () => {
         })
 };
 
+const initialValue = {
+    apiContactList: [],
+    searchContactList: [],
+    isSearch: false,
+    isPageLoading: false
+}
+
+const contactManagerReducer = (state, action) => {
+    switch (action.type) {
+        case "setApiContactList":
+            return { ...state, apiContactList: action.payload }
+        case "setSearchContactList":
+            return { ...state, searchContactList: action.payload }
+        case "setIsSearch":
+            return { ...state, isSearch: action.payload }
+        case "setIsPageLoading":
+            return { ...state, isPageLoading: action.payload }
+        default :
+            return state;
+    }
+}
+
 const ContactManager = () => {
-    const [apiContactList, setApiContactList] = useState([]);
-    const [searchContactList, setSearchContactList] = useState([]);
-    const [isSearch, setIsSearch] = useState(false);
-    const { data, isLoading, error } = useQuery('contacts', fetchData);
-    const [isPageLoading, setIsPageLoading] = useState(false);
+    const { data } = useQuery('contacts', fetchData);
     var contactArray = [];
+
+    const [ state, dispatch ] = useReducer(contactManagerReducer, initialValue)
 
     useEffect(() => {
         if (data) {
-            setApiContactList(data);
+            dispatch({type: 'setApiContactList', payload: data})
         }
     }, [data])
 
     useEffect(() => {
-        setIsPageLoading(true)
+        dispatch({type: 'setIsPageLoading', payload: true});
         const timer = setTimeout(() => {
-            setIsPageLoading(false);
+            dispatch({type: 'setIsPageLoading', payload: false});
         }, 750);
         return () => clearTimeout(timer);
     }, []);
 
     const handleSearch = (search) => {
-        if (search && apiContactList.length > 0) {
-            setIsSearch(true);
-            contactArray = apiContactList.filter(contact =>
+        if (search && state.apiContactList.length > 0) {
+            dispatch({type: 'setIsSearch', payload: true});
+            contactArray = state.apiContactList.filter(contact =>
                 contact.name.toLowerCase().includes(search.toLowerCase()) ||
                 contact.email.includes(search) ||
                 contact.mobileNumber.includes(search)
             );
-            setSearchContactList(contactArray);
+            dispatch({type: 'setSearchContactList', payload: contactArray});
         }
         else {
-            setIsSearch(false);
-            setSearchContactList([]);
+            dispatch({type: 'setIsSearch', payload: false});
+            dispatch({type: 'setSearchContactList', payload: []})
         }
     }
 
     return (
         <>
-            {isPageLoading && <div className="blur-background">
+            {state.isPageLoading && <div className="blur-background">
                 <div className="load-img load-rotate">
                     <svg version="1.1" id="L9" xmlns="http://www.w3.org/2000/svg" xmlnsXlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 100 100" enableBackground="new 0 0 0 0" xmlSpace="preserve">
                         <path fill="#fff" d="M73,50c0-12.7-10.3-23-23-23S27,37.3,27,50 M30.9,50c0-10.5,8.5-19.1,19.1-19.1S69.1,39.5,69.1,50"></path>
@@ -88,13 +108,13 @@ const ContactManager = () => {
                     <AppSearch onSearch={handleSearch} />
                 </div>
                 <div className="contact-lenght-display">
-                    {apiContactList.length ? <span >Total contacts: {apiContactList.length}</span> : ''}
+                    {state.apiContactList.length ? <span >Total contacts: {state.apiContactList.length}</span> : ''}
                 </div>
                 <div className="contacts-manager-body">
-                    {(apiContactList.length == 0) ? <div className="body-status"><span>Add new contact</span></div> : ''}
-                    {(isSearch && searchContactList.length == 0) ? <div className="body-status"><span>No records found </span></div> : ''}
+                    {(state.apiContactList.length == 0) ? <div className="body-status"><span>Add new contact</span></div> : ''}
+                    {(state.isSearch && state.searchContactList.length == 0) ? <div className="body-status"><span>No records found </span></div> : ''}
                     <div className="contact-details-body">
-                        <ContactListContext.Provider value={isSearch ? searchContactList : apiContactList}>
+                        <ContactListContext.Provider value={state.isSearch ? state.searchContactList : state.apiContactList}>
                             <ContactList />
                         </ContactListContext.Provider>
                     </div>

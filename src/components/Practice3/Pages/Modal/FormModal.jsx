@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useReducer } from "react";
 import AppButton from "../../Components/AppButton";
 import { Link, useNavigate } from "react-router-dom";
 import { useMutation, useQuery } from "react-query";
@@ -23,23 +23,43 @@ const fetchData = () => {
         })
 };
 
-const FormModal = () => {
-
-    const formConfig = useContext(FormDataContext);
-
-    const [allContacts, setAllContacts] = useState([]);
-    const contacts = useQuery('contacts', fetchData);
-    const [formData, setFormData] = useState({
+const initialState = {
+    allContacts: [],
+    formData: {
         id: 0,
         name: '',
         email: '',
         mobileNumber: '',
         profilePic: ''
-    });
-    const [isNameError, setIsNameError] = useState(false);
-    const [isEmailError, setIsEmailError] = useState(false);
-    const [isMobileNumberError, setIsMobileNumberError] = useState(false);
+    },
+    isNameError: false,
+    isEmailError: false,
+    isMobileNumberError: false
+};
+
+const actionTypes = {
+    SET_CONTACTS: 'SET_CONTACTS',
+    SET_FORM_DATA: 'SET_FORM_DATA',
+    SET_ERRORS: 'SET_ERRORS'
+};
+
+const FormModal = () => {
+    const formConfig = useContext(FormDataContext);
     const navigate = useNavigate();
+    const contactReducer = (state, action) => {
+        switch (action.type) {
+            case actionTypes.SET_CONTACTS:
+                return { ...state, allContacts: action.payload };
+            case actionTypes.SET_FORM_DATA:
+                return { ...state, formData: action.payload };
+            case actionTypes.SET_ERRORS:
+                return { ...state, ...action.payload };
+            default:
+                return state;
+        }
+    }
+
+    const [state, dispatch] = useReducer(contactReducer, initialState);
 
     const { data } = useQuery('contact', async () => {
         if (formConfig.id) {
@@ -53,12 +73,6 @@ const FormModal = () => {
                 })
         }
     });
-
-    useEffect(() => {
-        if (contacts.data) {
-            setAllContacts(contacts.data);
-        }
-    }, [contacts])
 
     const addData = useMutation((newData) => {
         client.post('/contacts', newData)
@@ -97,43 +111,47 @@ const FormModal = () => {
     }); 
 
     const handleDelete = () => {
-        deleteData.mutate(formData.id);
+        deleteData.mutate(state.formData.id);
     }
 
     const handleSubmit = (event) => {
         event.preventDefault();
-        if (validateExistingContact(formData)) {
+        if (validateExistingContact(state.formData)) {
             if (formConfig.isNewContact) {
-                addData.mutate(formData);
+                addData.mutate(state.formData);
             } else {
-                updateData.mutate(formData);
+                updateData.mutate(state.formData);
             }
         }
     };
 
     const handleChange = (event) => {
         const { name, value } = event.target;
-        setFormData(prevStatus => ({
-            ...prevStatus, [name]: value
-        }))
+        dispatch({
+            type: actionTypes.SET_FORM_DATA,
+            payload: {
+                ...state.formData,
+                [name]:value
+            }
+        });
         if (event.target.name == 'name') {
-            setIsNameError(!(/^[a-zA-Z ]+$/.test(event.target.value)));
+            state.isNameError = !(/^[a-zA-Z ]+$/.test(event.target.value));
         } else if (event.target.name == 'email') {
-            setIsEmailError(!(/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(event.target.value)));
+            state.isEmailError = !(/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(event.target.value));
         } else if (event.target.name == 'mobileNumber') {
-            setIsMobileNumberError(!(/^\d{10}$/.test(event.target.value)));
+            state.isMobileNumberError = !(/^\d{10}$/.test(event.target.value));
         }
     }
 
     useEffect(() => {
         if (!formConfig.isNewContact && data) {
-            setFormData(data);
+            dispatch({ type: actionTypes.SET_FORM_DATA, payload: data });
         }
-    }, [data])
+    }, [data]);
 
     const validateExistingContact = (contactDetails) => {
         let isValid = true;
-        for (let contact of allContacts) {
+        for (let contact of state.allContacts) {
             if ((contact.id != contactDetails.id) && (contactDetails.mobileNumber == contact.mobileNumber)) {
                 alert('Mobile number already exist !!!');
                 isValid = false;
@@ -152,36 +170,36 @@ const FormModal = () => {
             <div className="form-input">
                 <label>Name:</label>
                 {formConfig.isView ?
-                    (<div className="view-text"><span>{formData.name}</span></div>) :
+                    (<div className="view-text"><span>{state.formData.name}</span></div>) :
                     (<div className="input-style">
-                        <input onKeyDown={e => { e.key == 'Enter' && handleSubmit(e) }} required type="text" autoComplete="off" value={formData.name} name="name" onChange={handleChange} className={isNameError ? 'input-error' : ''} />
-                        {isNameError ? <span>Invalid name</span> : ''}
+                        <input onKeyDown={e => { e.key == 'Enter' && handleSubmit(e) }} required type="text" autoComplete="off" value={state.formData.name} name="name" onChange={handleChange} className={state.isNameError ? 'input-error' : ''} />
+                        {state.isNameError ? <span>Invalid name</span> : ''}
                     </div>)
                 }
             </div>
             <div className="form-input">
                 <label>Email:</label>
                 {formConfig.isView ?
-                    (<span className="view-text">{formData.email}</span>) :
+                    (<span className="view-text">{state.formData.email}</span>) :
                     (<div className="input-style">
-                        <input onKeyDown={e => { e.key == 'Enter' && handleSubmit(e) }} required type="email" autoComplete="off" value={formData.email} name="email" onChange={handleChange} className={isEmailError ? 'input-error' : ''} />
-                        {isEmailError ? <span>Invalid email</span> : ''}
+                        <input onKeyDown={e => { e.key == 'Enter' && handleSubmit(e) }} required type="email" autoComplete="off" value={state.formData.email} name="email" onChange={handleChange} className={state.isEmailError ? 'input-error' : ''} />
+                        {state.isEmailError ? <span>Invalid email</span> : ''}
                     </div>
                     )
                 }
             </div>
             <div className="form-input">
                 <label>Mobile Number:</label>
-                {formConfig.isView ? (<span className="view-text">{formData.mobileNumber}</span>) :
+                {formConfig.isView ? (<span className="view-text">{state.formData.mobileNumber}</span>) :
                     (<div className="input-style">
-                        <input onKeyDown={e => { e.key == 'Enter' && handleSubmit(e) }} required type="text" autoComplete="off" value={formData.mobileNumber} name="mobileNumber" onChange={handleChange} className={isMobileNumberError ? 'input-error' : ''} />
-                        {isMobileNumberError ? <span>Invalid mobile number</span> : null}
+                        <input onKeyDown={e => { e.key == 'Enter' && handleSubmit(e) }} required type="text" autoComplete="off" value={state.formData.mobileNumber} name="mobileNumber" onChange={handleChange} className={state.isMobileNumberError ? 'input-error' : ''} />
+                        {state.isMobileNumberError ? <span>Invalid mobile number</span> : null}
                     </div>)}
             </div>
             {!formConfig.isView && <div className="form-input">
                 <label>Profile link:</label>
                 <div className="input-style">
-                    <input onKeyDown={e => { e.key == 'Enter' && handleSubmit(e) }} type="text" autoComplete="off" placeholder="Optional" value={formData.profilePic} name="profilePic" onChange={handleChange} />
+                    <input onKeyDown={e => { e.key == 'Enter' && handleSubmit(e) }} type="text" autoComplete="off" placeholder="Optional" value={state.formData.profilePic} name="profilePic" onChange={handleChange} />
                 </div>
             </div>}
             <div className="flex-dir-row">
@@ -201,7 +219,7 @@ const FormModal = () => {
                         </Link>) :
                     <>
                         <Link onClick={handleSubmit}>
-                            <AppButton className={(isNameError || isEmailError || isMobileNumberError) ? 'form-btn-disabled' : 'form-btn'} btnType='submit' description='Submit' />
+                            <AppButton className={(state.isNameError || state.isEmailError || state.isMobileNumberError) ? 'form-btn-disabled' : 'form-btn'} btnType='submit' description='Submit' />
                         </Link>
                         <Link to={'/contact-manager'}>
                             <AppButton className='form-btn' btnType='button' description='Close' />
